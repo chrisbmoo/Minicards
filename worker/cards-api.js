@@ -1,5 +1,5 @@
 /*
- * Card manager API  —  /admin/api/cards
+ * Card manager API  —  /admin/api/cards  (called from worker/index.js)
  *
  * GET  → current cards.json (+ its version) and the signed-in editor's email
  * PUT  → save cards.json and any newly uploaded images as one GitHub commit;
@@ -8,7 +8,7 @@
  * Every request must carry a valid Cloudflare Access login (Cf-Access-Jwt-Assertion header).
  * Requests without one are refused, even if Access is misconfigured.
  *
- * Environment variables (Cloudflare Pages → Settings → Variables and secrets):
+ * Environment variables (Worker → Settings → Variables and secrets):
  *   GITHUB_TOKEN        fine-grained token, Contents: read & write on the repo   (secret)
  *   GITHUB_REPO         e.g. chrisbmoo/minicards
  *   GITHUB_BRANCH       e.g. main

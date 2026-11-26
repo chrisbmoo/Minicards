@@ -18,7 +18,7 @@ const CATEGORIES = ["see-and-do", "eat-and-drink", "shopping", "culture", "vario
 
 // Not part of the public site
 const SKIP = new Set([
-  "dist", "functions", "_templates", "node_modules", ".git", ".github",
+  "dist", "functions", "worker", "_templates", "node_modules", ".git", ".github",
   "build.js", "cards.json", "package.json", "package-lock.json", "README.md", ".gitignore",
   ".assetsignore", ".DS_Store", "wrangler.toml", "wrangler.jsonc",
 ]);
