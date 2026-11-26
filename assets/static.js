@@ -2,7 +2,7 @@
 (function () {
   // Web3Forms access key for the contact form. Create one free at https://web3forms.com
   // using the email address that should receive enquiries, then paste it here.
-  var WEB3FORMS_KEY = "YOUR_WEB3FORMS_ACCESS_KEY";
+  var WEB3FORMS_KEY = "621e19bc-423c-48e6-a288-1fb591cf1a17";
   var FALLBACK_EMAIL = "melb@minicards.com.au";
 
   document.addEventListener("submit", function (e) {

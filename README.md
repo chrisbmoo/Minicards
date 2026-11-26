@@ -36,11 +36,9 @@ find-and-replace it across all `index.html` files.
 
 The Contact page form sends through [Web3Forms](https://web3forms.com) (free, up to 250 messages/month).
 
-**To switch it on:** create a free access key at web3forms.com using the email address that
-should receive enquiries, then paste it into `WEB3FORMS_KEY` at the top of `assets/static.js`.
-
-Until a key is added, pressing "Send message" opens the visitor's email app with their
-message addressed to melb@minicards.com.au, so no enquiries are lost.
+Messages go to the email address the access key was created with. To change the
+recipient, create a new access key at web3forms.com and replace `WEB3FORMS_KEY` at the
+top of `assets/static.js`.
 
 ## Search
 
