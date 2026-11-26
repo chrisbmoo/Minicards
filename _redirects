@@ -1,0 +1,8 @@
+# Old WordPress URLs -> pages (301 = permanent, keeps Google rankings)
+/index.php/*      /:splat   301
+/sample-page/     /         301
+/wp-admin/*       /         301
+/wp-login.php     /         301
+/feed/*           /         301
+/comments/feed/*  /         301
+/author/*         /         301
