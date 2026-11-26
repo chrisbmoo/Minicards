@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Manage cards – Minicards</title>
+<link rel="icon" href="/wp-content/uploads/2021/07/Minicards_M_favicon-1-150x150.png">
+<link rel="stylesheet" href="/wp-content/uploads/elementor/google-fonts/css/montserrat.css">
+<link rel="stylesheet" href="/wp-content/uploads/elementor/google-fonts/css/roboto.css">
+<style>
+  :root {
+    --bg: #ECEEF1;
+    --slot: #FFFFFF;
+    --ink: #1C1F24;
+    --muted: #5F6670;
+    --line: #D3D7DD;
+    --red: #D7313A;
+    --red-dark: #B5222B;
+    --amber: #A15C00;
+    --amber-bg: #FFF3E0;
+    --ok: #1F7A45;
+    --focus: #1F5FD0;
+    --head: "Montserrat", "Helvetica Neue", Arial, sans-serif;
+    --body: "Roboto", "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--ink); font: 400 16px/1.5 var(--body); }
+  button, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* ---------- header */
+  header.top {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px clamp(16px, 4vw, 40px); background: var(--slot); border-bottom: 1px solid var(--line);
+  }
+  header.top img { height: 34px; width: auto; display: block; }
+  header.top h1 { font: 600 18px/1.2 var(--head); margin: 0; padding-left: 16px; border-left: 1px solid var(--line); }
+  header.top .who { margin-left: auto; color: var(--muted); font-size: 14px; text-align: right; }
+  header.top .who a { color: var(--ink); }
+
+  main { padding: 28px clamp(16px, 4vw, 40px) 140px; max-width: 1320px; margin: 0 auto; }
+
+  /* ---------- toolbar */
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-bottom: 8px; }
+  .filters { display: flex; flex-wrap: wrap; gap: 6px; }
+  .filters button {
+    border: 1px solid var(--line); background: var(--slot); border-radius: 999px;
+    padding: 6px 14px; font-size: 14px; cursor: pointer;
+  }
+  .filters button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .filters .count { opacity: .65; margin-left: 4px; }
+  .btn {
+    border: 0; border-radius: 6px; padding: 10px 18px; cursor: pointer; font-weight: 500;
+    background: var(--ink); color: #fff;
+  }
+  .btn.secondary { background: var(--slot); color: var(--ink); border: 1px solid var(--line); }
+  .btn.red { background: var(--red); }
+  .btn.red:hover { background: var(--red-dark); }
+  .btn.danger { background: transparent; color: var(--red-dark); border: 1px solid #E9B7BA; }
+  .btn:disabled { opacity: .5; cursor: progress; }
+  .toolbar .add { margin-left: auto; }
+  .hint { color: var(--muted); font-size: 14px; margin: 0 0 22px; max-width: 70ch; }
+
+  /* ---------- the rack */
+  .rack {
+    list-style: none; margin: 0; padding: 0;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 28px 22px;
+  }
+  .rack li { position: relative; }
+  .slot {
+    display: block; width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 4px;
+    background: var(--slot); cursor: pointer; text-align: left;
+  }
+  .slot:hover { border-color: #9AA1AB; }
+  .slot img { display: block; width: 100%; aspect-ratio: 650 / 1004; object-fit: cover; background: #F4F5F7; }
+  .rack li.hidden .slot img { opacity: .35; filter: grayscale(1); }
+  .rack li.dragging { opacity: .35; }
+  .rack li.drop-before::before {
+    content: ""; position: absolute; left: -13px; top: 0; bottom: 34px; width: 4px; border-radius: 2px; background: var(--focus);
+  }
+  .name { font: 600 14px/1.3 var(--head); margin: 10px 2px 4px; }
+  .meta { font-size: 12.5px; color: var(--muted); margin: 0 2px; }
+  .tag-hidden {
+    position: absolute; top: 18px; left: 18px; background: var(--amber-bg); color: var(--amber);
+    font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 3px;
+  }
+  .tag-changed { position: absolute; top: 18px; right: 18px; width: 10px; height: 10px; border-radius: 50%; background: var(--focus); }
+  .empty { padding: 60px 20px; text-align: center; color: var(--muted); }
+
+  /* ---------- editor panel */
+  .scrim { position: fixed; inset: 0; background: rgba(28,31,36,.35); z-index: 50; }
+  .panel {
+    position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 100%); background: var(--slot);
+    display: flex; flex-direction: column; box-shadow: -8px 0 30px rgba(28,31,36,.18); z-index: 51;
+    animation: slide .18s ease-out;
+  }
+  @keyframes slide { from { transform: translateX(24px); opacity: .6; } }
+  @media (prefers-reduced-motion: reduce) { .panel { animation: none; } }
+  .panel header { display: flex; align-items: center; padding: 18px 24px; border-bottom: 1px solid var(--line); }
+  .panel header h2 { font: 600 18px/1.3 var(--head); margin: 0; }
+  .panel header .close { margin-left: auto; background: none; border: 0; font-size: 26px; line-height: 1; cursor: pointer; padding: 4px 8px; }
+  .panel .body { overflow-y: auto; padding: 20px 24px 28px; flex: 1; }
+  .panel footer { display: flex; gap: 10px; align-items: center; padding: 14px 24px; border-top: 1px solid var(--line); }
+  .panel footer .spacer { flex: 1; }
+
+  .images { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 22px; }
+  .drop {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+    aspect-ratio: 650 / 1004; border: 2px dashed var(--line); border-radius: 4px; background: #F7F8FA;
+    color: var(--muted); font-size: 14px; padding: 12px; cursor: pointer; position: relative; overflow: hidden;
+  }
+  .drop.over { border-color: var(--focus); background: #EEF3FD; }
+  .drop.has { border-style: solid; padding: 0; }
+  .drop img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .drop strong { color: var(--ink); font-weight: 500; display: block; margin-bottom: 4px; }
+  .imgcap { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; margin-top: 6px; color: var(--muted); }
+  .imgcap button { background: none; border: 0; padding: 0; color: var(--red-dark); cursor: pointer; font-size: 13px; text-decoration: underline; }
+
+  .field { margin-bottom: 20px; }
+  .field > label, .field > .label { display: block; font-weight: 500; margin-bottom: 6px; }
+  .field input[type=text] {
+    width: 100%; padding: 10px 12px; border: 1px solid #B9BFC8; border-radius: 6px; background: #fff;
+  }
+  .field .help { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  .url { display: flex; align-items: stretch; border: 1px solid #B9BFC8; border-radius: 6px; overflow: hidden; }
+  .url span { padding: 10px 0 10px 12px; color: var(--muted); white-space: nowrap; background: #F7F8FA; }
+  .url input[type=text] { border: 0; border-radius: 0; padding-left: 2px; background: #F7F8FA; }
+  .url input:not([readonly]) { background: #fff; }
+  .url:has(input:not([readonly])) span { background: #fff; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chips label {
+    display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 999px;
+    padding: 6px 14px 6px 10px; cursor: pointer; font-size: 14px;
+  }
+  .chips label:has(input:checked) { border-color: var(--ink); background: #F1F2F4; }
+  .chips input { accent-color: var(--ink); width: 16px; height: 16px; margin: 0; }
+  .switch { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; }
+  .switch input { width: 20px; height: 20px; accent-color: var(--ink); margin: 2px 0 0; }
+  .move { display: flex; gap: 8px; flex-wrap: wrap; }
+  .confirm { background: #FDF0F0; border: 1px solid #E9B7BA; border-radius: 6px; padding: 14px; margin-top: 8px; }
+  .confirm p { margin: 0 0 10px; }
+  .err { color: var(--red-dark); font-size: 14px; margin: 0 0 14px; }
+
+  /* ---------- publish bar */
+  .publish {
+    position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); width: min(760px, calc(100% - 24px));
+    display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 20px;
+    background: var(--ink); color: #fff; border-radius: 10px; box-shadow: 0 10px 30px rgba(28,31,36,.3); z-index: 40;
+  }
+  .publish p { margin: 0; flex: 1; font-size: 15px; }
+  .publish .btn.secondary { background: transparent; color: #fff; border-color: #535A66; }
+  .toast {
+    position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); width: min(620px, calc(100% - 24px));
+    padding: 14px 20px; border-radius: 10px; background: var(--slot); border: 1px solid var(--line);
+    box-shadow: 0 10px 30px rgba(28,31,36,.15); font-size: 15px; z-index: 60;
+  }
+  .toast.ok { border-left: 5px solid var(--ok); }
+  .toast.bad { border-left: 5px solid var(--red); }
+  .state { padding: 80px 20px; text-align: center; color: var(--muted); }
+  .state h2 { font: 600 20px var(--head); color: var(--ink); margin: 0 0 8px; }
+
+  @media (max-width: 640px) {
+    header.top h1 { display: none; }
+    .rack { grid-template-columns: repeat(2, 1fr); gap: 20px 14px; }
+    .toolbar .add { margin-left: 0; width: 100%; }
+    .publish { flex-wrap: wrap; }
+    .publish p { flex-basis: 100%; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <img src="/wp-content/uploads/2021/01/Minicards_Melbourne_logo.png" alt="Minicards Melbourne">
+  <h1>Manage cards</h1>
+  <div class="who" id="who"></div>
+</header>
+
+<main id="app"><div class="state"><p>Loading cards…</p></div></main>
+<div id="layer"></div>
+
+<script>
+"use strict";
+const API = "/admin/api/cards";
+const CATS = [
+  ["see-and-do", "See & do"], ["eat-and-drink", "Eat & Drink"], ["shopping", "Shopping"],
+  ["culture", "Culture"], ["various", "Various"],
+];
+const catLabel = Object.fromEntries(CATS);
+
+let cards = [], saved = "[]", version = null, uploads = {}, filter = "all", busy = false, toastTimer;
+const app = document.getElementById("app"), layer = document.getElementById("layer");
+
+const h = (tag, attrs = {}, ...kids) => {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (k === "class") el.className = v;
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid.nodeType ? kid : document.createTextNode(kid));
+  return el;
+};
+const slugify = (s) => s.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "")
+  .replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
+const imgUrl = (img) => (img && (uploads[img.src] ? uploads[img.src].dataUrl : img.src)) || "";
+const dirty = () => JSON.stringify(cards) !== saved;
+const changedSlugs = () => {
+  const before = Object.fromEntries(JSON.parse(saved).map((c) => [c.slug, JSON.stringify(c)]));
+  return new Set(cards.filter((c) => before[c.slug] !== JSON.stringify(c)).map((c) => c.slug));
+};
+
+// ---------------------------------------------------------------- load
+async function load() {
+  try {
+    const r = await fetch(API, { headers: { accept: "application/json" }, cache: "no-store" });
+    if (r.status === 401) return showState("Your sign-in has expired", "Reload the page to sign in again.", true);
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || "Could not load the cards");
+    cards = data.cards; saved = JSON.stringify(cards); version = data.version; uploads = {};
+    document.getElementById("who").replaceChildren(
+      h("div", {}, "Signed in as ", h("strong", {}, data.email)),
+      h("a", { href: "/cdn-cgi/access/logout" }, "Sign out"));
+    render();
+  } catch (e) {
+    showState("The cards could not be loaded", e.message + ". Reload the page to try again.", true);
+  }
+}
+function showState(title, text, reload) {
+  app.replaceChildren(h("div", { class: "state" }, h("h2", {}, title), h("p", {}, text),
+    reload ? h("button", { class: "btn secondary", onclick: () => location.reload() }, "Reload") : null));
+}
+
+// ---------------------------------------------------------------- main view
+function render() {
+  const shown = filter === "all" ? cards : cards.filter((c) => c.categories.includes(filter));
+  const changed = changedSlugs();
+  const count = (k) => (k === "all" ? cards.length : cards.filter((c) => c.categories.includes(k)).length);
+
+  const filters = h("div", { class: "filters", role: "group", "aria-label": "Show cards in" },
+    [["all", "All cards"], ...CATS].map(([k, label]) =>
+      h("button", { "aria-pressed": String(filter === k), onclick: () => { filter = k; render(); } },
+        label, h("span", { class: "count" }, String(count(k))))));
+
+  const list = h("ol", { class: "rack", "aria-label": "Cards in website order" },
+    shown.map((c) => {
+      const li = h("li", { class: c.hidden ? "hidden" : "", draggable: "true", "data-slug": c.slug },
+        h("button", { class: "slot", onclick: () => openEditor(c.slug),
+            "aria-label": `Edit ${c.title}${c.hidden ? " (hidden)" : ""}` },
+          h("img", { src: imgUrl(c.front), alt: "", loading: "lazy" })),
+        c.hidden ? h("span", { class: "tag-hidden" }, "Hidden") : null,
+        changed.has(c.slug) ? h("span", { class: "tag-changed", title: "Changed, not yet published" }) : null,
+        h("p", { class: "name" }, c.title),
+        h("p", { class: "meta" }, c.categories.length ? c.categories.map((x) => catLabel[x]).join(", ") : "No category – not shown"));
+      dragHandlers(li);
+      return li;
+    }));
+
+  app.replaceChildren(
+    h("div", { class: "toolbar" }, filters,
+      h("button", { class: "btn add", onclick: () => openEditor(null) }, "Add a card")),
+    h("p", { class: "hint" }, filter === "all"
+      ? "Cards appear on the website in this order. Click a card to change its images, name or categories, or to move it. On a computer you can also drag cards into place."
+      : `Showing the cards in ${catLabel[filter]}. Drag to change their order in this tab.`),
+    shown.length ? list : h("div", { class: "empty" }, filter === "all"
+      ? "There are no cards yet. Add one to get started." : `No cards are in ${catLabel[filter]} yet.`));
+  renderPublishBar();
+}
+
+// drag to reorder (moves the card in the overall order)
+let dragSlug = null;
+function dragHandlers(li) {
+  li.addEventListener("dragstart", (e) => { dragSlug = li.dataset.slug; li.classList.add("dragging"); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", dragSlug); });
+  li.addEventListener("dragend", () => { dragSlug = null; document.querySelectorAll(".rack li").forEach((x) => x.classList.remove("dragging", "drop-before")); });
+  li.addEventListener("dragover", (e) => {
+    if (!dragSlug || dragSlug === li.dataset.slug) return;
+    e.preventDefault();
+    document.querySelectorAll(".drop-before").forEach((x) => x !== li && x.classList.remove("drop-before"));
+    li.classList.add("drop-before");
+  });
+  li.addEventListener("dragleave", () => li.classList.remove("drop-before"));
+  li.addEventListener("drop", (e) => {
+    e.preventDefault();
+    if (!dragSlug || dragSlug === li.dataset.slug) return;
+    moveBefore(dragSlug, li.dataset.slug);
+  });
+}
+function moveBefore(slug, targetSlug) {
+  const from = cards.findIndex((c) => c.slug === slug);
+  const [card] = cards.splice(from, 1);
+  cards.splice(cards.findIndex((c) => c.slug === targetSlug), 0, card);
+  render();
+}
+// move earlier/later within the current filter (keyboard and phone friendly)
+function nudge(slug, dir) {
+  const shown = filter === "all" ? cards : cards.filter((c) => c.categories.includes(filter));
+  const i = shown.findIndex((c) => c.slug === slug), j = i + dir;
+  if (j < 0 || j >= shown.length) return;
+  const card = cards.splice(cards.indexOf(shown[i]), 1)[0];
+  const target = shown[j];
+  const t = cards.indexOf(target);
+  cards.splice(dir < 0 ? t : t + 1, 0, card);
+}
+
+// ---------------------------------------------------------------- publish bar + toasts
+function renderPublishBar() {
+  document.querySelectorAll(".publish").forEach((x) => x.remove());
+  if (!dirty()) return;
+  const n = changedSlugs().size + JSON.parse(saved).filter((c) => !cards.some((x) => x.slug === c.slug)).length;
+  const orderOnly = n === 0;
+  document.body.append(h("div", { class: "publish", role: "region", "aria-label": "Unpublished changes" },
+    h("p", {}, orderOnly ? "You've changed the card order. It isn't on the website yet."
+      : `${n} card${n === 1 ? "" : "s"} changed. Changes aren't on the website until you publish.`),
+    h("button", { class: "btn secondary", onclick: discard, disabled: busy }, "Discard changes"),
+    h("button", { class: "btn red", onclick: publish, disabled: busy }, busy ? "Publishing…" : "Publish changes")));
+}
+function toast(text, ok = true) {
+  document.querySelectorAll(".toast").forEach((x) => x.remove());
+  const t = h("div", { class: "toast " + (ok ? "ok" : "bad"), role: ok ? "status" : "alert" }, text);
+  document.body.append(t);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.remove(), ok ? 9000 : 15000);
+}
+function discard() {
+  cards = JSON.parse(saved); uploads = {}; render();
+  toast("Changes discarded.");
+}
+async function publish() {
+  busy = true; renderPublishBar();
+  const used = new Set(cards.flatMap((c) => [c.front && c.front.src, c.back && c.back.src]));
+  const ups = Object.entries(uploads).filter(([src]) => used.has(src))
+    .map(([src, u]) => ({ path: src.slice(1), base64: u.dataUrl.split(",")[1] }));
+  try {
+    const r = await fetch(API, { method: "PUT", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ version, cards, uploads: ups }) });
+    const data = await r.json().catch(() => ({}));
+    if (r.status === 401) throw new Error("Your sign-in has expired. Copy down your changes, reload the page and sign in again");
+    if (!r.ok) throw new Error(data.error || "Publishing failed");
+    cards = data.cards; saved = JSON.stringify(cards); version = data.version || version;
+    // keep previews of just-uploaded images until the site has rebuilt
+    busy = false; render();
+    toast("Published. The website will show your changes in about two minutes.");
+  } catch (e) {
+    busy = false; renderPublishBar();
+    toast(e.message + ".", false);
+  }
+}
+window.addEventListener("beforeunload", (e) => { if (dirty()) { e.preventDefault(); e.returnValue = ""; } });
+
+// ---------------------------------------------------------------- image handling
+const MAX_W = 650;
+function readImage(file) {
+  return new Promise((resolve, reject) => {
+    if (!/^image\/(jpeg|png|webp|gif)$/.test(file.type)) return reject(new Error("Choose a JPG, PNG or WebP image"));
+    if (file.size > 25 * 1024 * 1024) return reject(new Error("That image is over 25 MB. Choose a smaller one"));
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, MAX_W / img.naturalWidth);
+      const w = Math.round(img.naturalWidth * scale), hgt = Math.round(img.naturalHeight * scale);
+      const cv = document.createElement("canvas"); cv.width = w; cv.height = hgt;
+      const ctx = cv.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, hgt); ctx.drawImage(img, 0, 0, w, hgt);
+      URL.revokeObjectURL(url);
+      resolve({ dataUrl: cv.toDataURL("image/jpeg", 0.88), width: w, height: hgt });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("That file couldn't be opened as an image")); };
+    img.src = url;
+  });
+}
+
+// ---------------------------------------------------------------- editor panel
+function openEditor(slug) {
+  const isNew = slug == null;
+  const orig = isNew ? null : cards.find((c) => c.slug === slug);
+  const d = isNew
+    ? { id: null, slug: "", title: "", front: null, back: null, categories: filter !== "all" ? [filter] : [], hidden: false }
+    : JSON.parse(JSON.stringify(orig));
+  let slugTouched = !isNew, confirmDelete = false, error = "";
+  const opener = document.activeElement;
+
+  function close() { layer.replaceChildren(); document.removeEventListener("keydown", onKey); if (opener && opener.focus) opener.focus(); }
+  function onKey(e) { if (e.key === "Escape") close(); }
+  document.addEventListener("keydown", onKey);
+
+  function imageBox(which, label, optional) {
+    const img = d[which];
+    const input = h("input", { type: "file", accept: "image/jpeg,image/png,image/webp", class: "sr-only", id: `f-${which}`,
+      onchange: (e) => e.target.files[0] && take(e.target.files[0]) });
+    async function take(file) {
+      try {
+        const res = await readImage(file);
+        const base = slugify(d.slug || d.title || "card") || "card";
+        const src = `/wp-content/uploads/cards/${base}-${which}-${Date.now().toString(36)}.jpg`;
+        uploads[src] = res;
+        d[which] = { src, width: res.width, height: res.height };
+        error = ""; draw();
+      } catch (e) { error = e.message + "."; draw(); }
+    }
+    const box = h("label", { class: "drop" + (img ? " has" : ""), for: `f-${which}`,
+        ondragover: (e) => { e.preventDefault(); box.classList.add("over"); },
+        ondragleave: () => box.classList.remove("over"),
+        ondrop: (e) => { e.preventDefault(); box.classList.remove("over"); e.dataTransfer.files[0] && take(e.dataTransfer.files[0]); } },
+      img ? h("img", { src: imgUrl(img), alt: `${label} of the card` })
+          : [h("strong", {}, `Add ${label.toLowerCase()}`), optional ? "Optional. " : "", "Drop an image here or click to choose one"]);
+    return h("div", {}, input, box,
+      h("div", { class: "imgcap" }, h("span", {}, label),
+        img ? h("span", {},
+          h("button", { type: "button", onclick: () => input.click() }, "Replace"),
+          optional ? [" ", h("button", { type: "button", onclick: () => { d.back = null; draw(); } }, "Remove")] : null) : null));
+  }
+
+  function apply() {
+    d.title = d.title.trim();
+    if (!d.title) { error = "Give the card a name."; return draw(); }
+    if (!d.front) { error = "Add the front image of the card."; return draw(); }
+    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(d.slug)) { error = "The web address can only use lowercase letters, numbers and dashes."; return draw(); }
+    if (cards.some((c) => c.slug === d.slug && c !== orig)) { error = `Another card already uses the web address “${d.slug}”. Choose a different one.`; return draw(); }
+    if (isNew) cards.unshift(d); else Object.assign(orig, d);
+    close(); render();
+    if (isNew) toast(`“${d.title}” added at the start of the list. Publish when you're ready.`);
+  }
+  function remove() {
+    cards.splice(cards.indexOf(orig), 1);
+    close(); render(); toast(`“${orig.title}” removed. Publish to take it off the website.`);
+  }
+
+  function draw() {
+    const scroll = layer.querySelector(".body") ? layer.querySelector(".body").scrollTop : 0;
+    const titleInput = h("input", { type: "text", id: "e-title", value: d.title, maxlength: "120", autocomplete: "off",
+      oninput: (e) => { d.title = e.target.value; if (!slugTouched) { d.slug = slugify(d.title); slugInput.value = d.slug; } } });
+    const slugInput = h("input", { type: "text", id: "e-slug", value: d.slug, readonly: !isNew, maxlength: "80", autocomplete: "off",
+      oninput: (e) => { slugTouched = true; d.slug = slugify(e.target.value); } , onblur: (e) => { e.target.value = d.slug; } });
+
+    const body = h("div", { class: "body" },
+      error ? h("p", { class: "err", role: "alert" }, error) : null,
+      h("div", { class: "images" }, imageBox("front", "Front", false), imageBox("back", "Back", true)),
+      h("div", { class: "field" }, h("label", { for: "e-title" }, "Card name"), titleInput,
+        h("p", { class: "help" }, "Used for the page title and image descriptions, e.g. “Melbourne Skydeck”.")),
+      h("div", { class: "field" }, h("label", { for: "e-slug" }, "Web address"),
+        h("div", { class: "url" }, h("span", {}, "minicards.com.au/cards/"), slugInput),
+        h("p", { class: "help" }, isNew ? "Filled in from the card name. You can change it before publishing."
+          : "Fixed once a card is published, so existing links keep working.")),
+      h("div", { class: "field" }, h("span", { class: "label", id: "cat-label" }, "Show in these tabs"),
+        h("div", { class: "chips", role: "group", "aria-labelledby": "cat-label" },
+          CATS.map(([k, label]) => h("label", {},
+            h("input", { type: "checkbox", checked: d.categories.includes(k),
+              onchange: (e) => { d.categories = CATS.map(([x]) => x).filter((x) => x === k ? e.target.checked : d.categories.includes(x)); } }),
+            label)))),
+      h("div", { class: "field" },
+        h("label", { class: "switch" },
+          h("input", { type: "checkbox", checked: d.hidden, onchange: (e) => { d.hidden = e.target.checked; } }),
+          h("span", {}, h("strong", { style: "font-weight:500" }, "Hide this card"),
+            h("span", { class: "help", style: "display:block;margin:0" }, "Takes it off the website but keeps it here, ready to show again.")))),
+      !isNew ? h("div", { class: "field" }, h("span", { class: "label" }, "Position"),
+        h("div", { class: "move" },
+          h("button", { type: "button", class: "btn secondary", onclick: () => { nudge(orig.slug, -1); render(); } }, "Move earlier"),
+          h("button", { type: "button", class: "btn secondary", onclick: () => { nudge(orig.slug, 1); render(); } }, "Move later")),
+        h("p", { class: "help" }, filter === "all" ? "Moves the card one place in the website order." : `Moves the card one place within ${catLabel[filter]}.`)) : null,
+      !isNew ? h("div", { class: "field" },
+        confirmDelete
+          ? h("div", { class: "confirm", role: "alert" },
+              h("p", {}, `Delete “${orig.title}”? After you publish, its page is removed from the website. To keep it for later, hide it instead.`),
+              h("div", { class: "move" },
+                h("button", { type: "button", class: "btn red", onclick: remove }, "Delete card"),
+                h("button", { type: "button", class: "btn secondary", onclick: () => { confirmDelete = false; draw(); } }, "Keep card")))
+          : h("button", { type: "button", class: "btn danger", onclick: () => { confirmDelete = true; draw(); } }, "Delete this card")) : null);
+
+    const panel = h("div", { class: "panel", role: "dialog", "aria-modal": "true", "aria-labelledby": "e-head" },
+      h("header", {}, h("h2", { id: "e-head" }, isNew ? "Add a card" : `Edit ${orig.title}`),
+        h("button", { class: "close", onclick: close, "aria-label": "Close without saving" }, "×")),
+      body,
+      h("footer", {},
+        h("button", { class: "btn", onclick: apply }, isNew ? "Add card" : "Done"),
+        h("button", { class: "btn secondary", onclick: close }, "Cancel"),
+        h("span", { class: "spacer" }),
+        !isNew && !orig.hidden ? h("a", { href: `/cards/${orig.slug}/`, target: "_blank", rel: "noopener", style: "color:var(--muted);font-size:14px" }, "View on website") : null));
+    layer.replaceChildren(h("div", { class: "scrim", onclick: close }), panel);
+    body.scrollTop = scroll;
+  }
+  draw();
+  (layer.querySelector(isNew ? "#e-title" : ".close") || layer).focus();
+}
+
+load();
+</script>
+</body>
+</html>
