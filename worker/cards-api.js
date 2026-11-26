@@ -91,7 +91,10 @@ export async function verifyAccess(request, env) {
   const now = Math.floor(Date.now() / 1000);
   const auds = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
   if (!auds.includes(aud)) return null;
-  if (payload.iss !== `https://${team}`) return null;
+  // Signature (this team's keys) + audience (this exact Access app) are what prove the login.
+  // The issuer is only checked to be a Cloudflare Access team domain, because it can still show
+  // a team's previous name for a while after the team is renamed.
+  if (!/^https:\/\/[a-z0-9-]+\.cloudflareaccess\.com$/.test(String(payload.iss || ""))) return null;
   if (!payload.exp || payload.exp < now) return null;
   if (payload.nbf && payload.nbf > now + 60) return null;
   return payload.email || null;
