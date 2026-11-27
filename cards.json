@@ -29,7 +29,7 @@
         "see-and-do",
         "culture"
       ],
-      "hidden": false
+      "hidden": true
     },
     {
       "id": 2003,
@@ -89,6 +89,22 @@
       "back": null,
       "categories": [
         "see-and-do"
+      ],
+      "hidden": false
+    },
+    {
+      "id": 313,
+      "slug": "cheaper-car-rentals",
+      "title": "Cheaper Car Rentals",
+      "front": {
+        "src": "/wp-content/uploads/2022/05/Minicards_Cheaper-Car-Rentals_Front.jpg",
+        "width": 650,
+        "height": 1004
+      },
+      "back": null,
+      "categories": [
+        "shopping",
+        "various"
       ],
       "hidden": false
     },
@@ -208,22 +224,6 @@
       "back": null,
       "categories": [
         "eat-and-drink"
-      ],
-      "hidden": false
-    },
-    {
-      "id": 313,
-      "slug": "cheaper-car-rentals",
-      "title": "Cheaper Car Rentals",
-      "front": {
-        "src": "/wp-content/uploads/2022/05/Minicards_Cheaper-Car-Rentals_Front.jpg",
-        "width": 650,
-        "height": 1004
-      },
-      "back": null,
-      "categories": [
-        "shopping",
-        "various"
       ],
       "hidden": false
     }
